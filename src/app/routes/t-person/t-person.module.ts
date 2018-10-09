@@ -3,6 +3,7 @@ import { SharedModule } from '@shared/shared.module';
 import { TPersonRoutingModule } from './t-person-routing.module';
 import { TPersonListComponent } from './list/list.component';
 import { TPersonModuleComponent } from './module/module.component';
+import { ServiceProxyModule } from '@shared/service-proxies/service-proxy.module';
 
 const COMPONENTS = [
   TPersonListComponent,
@@ -12,7 +13,8 @@ const COMPONENTS_NOROUNT = [];
 @NgModule({
   imports: [
     SharedModule,
-    TPersonRoutingModule
+    TPersonRoutingModule,
+    ServiceProxyModule
   ],
   declarations: [
     ...COMPONENTS,

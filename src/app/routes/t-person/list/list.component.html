@@ -1,9 +1,142 @@
 <page-header>
-  <ng-template #action>
-    <button (click)="add()" nz-button nzType="primary">新建</button>
-  </ng-template>
 </page-header>
 <nz-card>
-  <sf mode="search" [schema]="searchSchema" (formSubmit)="st.reset($event)" (formReset)="st.reset($event)"></sf>
-  <st #st [data]="url" [columns]="columns"></st>
+  <form nz-form [nzLayout]="'inline'" (ngSubmit)="refreshGoFirstPage()" class="search__form">
+    <nz-row [nzGutter]="{ md: 8, lg: 24, xl: 48 }">
+      <nz-col nzMd="8" nzSm="24">
+        <nz-form-item>
+          <nz-form-label nzFor="searchKey">关键字</nz-form-label>
+          <nz-form-control>
+            <input nz-input [(ngModel)]="searchKey" name="searchKey" placeholder="请输入" id="searchKey">
+          </nz-form-control>
+        </nz-form-item>
+      </nz-col>
+      <nz-col nzMd="8" nzSm="24">
+        <nz-form-item>
+          <nz-form-label nzFor="qcName">用户名称</nz-form-label>
+          <nz-form-control>
+            <input nz-input [(ngModel)]="queryDto.cName" name="qcName" placeholder="请输入" id="qcName">
+          </nz-form-control>
+        </nz-form-item>
+      </nz-col>
+      <nz-col nzMd="8" nzSm="24" *ngIf="expandForm">
+        <nz-form-item>
+          <nz-form-label nzFor="qcCdoe">编号</nz-form-label>
+          <nz-form-control>
+            <input nz-input [(ngModel)]="queryDto.cCdoe" name="qcCdoe" placeholder="请输入" id="qcCdoe">
+          </nz-form-control>
+        </nz-form-item>
+      </nz-col>
+      <nz-col nzMd="8" nzSm="24" *ngIf="expandForm">
+        <nz-form-item>
+          <nz-form-label nzFor="qcPhone">电话号码</nz-form-label>
+          <nz-form-control>
+            <input nz-input [(ngModel)]="queryDto.cPhone" name="qcPhone" placeholder="请输入" id="qcPhone">
+          </nz-form-control>
+        </nz-form-item>
+      </nz-col>
+      <nz-col nzMd="8" nzSm="24" *ngIf="expandForm">
+        <nz-form-item>
+          <nz-form-label nzFor="updatedAt">更新日期</nz-form-label>
+          <nz-form-control>
+          </nz-form-control>
+        </nz-form-item>
+      </nz-col>
+      <nz-col nzMd="8" nzSm="24" *ngIf="expandForm">
+        <nz-form-item>
+          <nz-form-label nzFor="qcMemo">备注</nz-form-label>
+          <nz-form-control>
+            <input nz-input [(ngModel)]="queryDto.cMemo" name="qcMemo" placeholder="请输入" id="qcMemo">
+          </nz-form-control>
+        </nz-form-item>
+      </nz-col>
+      <nz-col [nzSpan]="expandForm ? 24 : 8" [class.text-right]="expandForm">
+        <button nz-button type="submit" [nzType]="'primary'" [nzLoading]="loading">查询</button>
+        <button nz-button type="reset" (click)="st.reset($event)" class="mx-sm">重置</button>
+        <a (click)="expandForm=!expandForm">
+          {{expandForm ? '收起' : '展开'}}
+          <i class="anticon" [class.anticon-down]="!expandForm" [class.anticon-up]="expandForm"></i>
+        </a>
+
+      </nz-col>
+    </nz-row>
+  </form>
+  <button nz-button (click)="add(modalContent)" [nzType]="'primary'">
+    <i class="anticon anticon-plus"></i>
+    <span>新建</span>
+  </button>
+  <ng-container *ngIf="selectedDataItems.length > 0">
+    <button nz-button class="ml-sm">批量操作</button>
+    <nz-dropdown [nzPlacement]="'bottomLeft'">
+      <button nz-button nz-dropdown class="ml-sm">
+        更多操作
+        <i class="anticon anticon-down"></i>
+      </button>
+      <ul nz-menu>
+        <li nz-menu-item (click)="remove()">删除</li>
+        <li nz-menu-item (click)="approval()">批量审批</li>
+      </ul>
+    </nz-dropdown>
+  </ng-container>
+  <div class="my-md">
+    <nz-alert [nzType]="'info'" [nzShowIcon]="true" [nzMessage]="message">
+      <ng-template #message>
+        已选择
+        <strong class="text-primary">{{selectedDataItems.length}}</strong> 项&nbsp;&nbsp;
+        <a *ngIf="totalCallNo > 0" (click)="st.clearCheck()" class="ml-lg">清空</a>
+      </ng-template>
+    </nz-alert>
+  </div>
+  <st #st [columns]="columns" [data]="dataList" [loading]="isTableLoading" [total]="totalItems"
+      [page]="pager"
+    (checkboxChange)="checkboxChange($event)"  (filterChange)="refresh()">
+  </st>
 </nz-card>
+
+<nz-modal
+  [(nzVisible)]="isEditVisible"
+  [nzTitle]="''"
+  [nzClosable]="true"
+  [nzWidth]="520"
+  [nzContent]="modalContent"
+  [nzOkText]="'确定'"
+  [nzCancelText]="'取消'"
+  [nzMaskClosable]="true"
+  [nzWrapClassName]="''"
+  (nzOnCancel)="handleEditCancel($event)"
+  (nzOnOk)="handleEditOk($event)">
+  <ng-template #modalContent>对话框的内容</ng-template>
+</nz-modal>
+
+<ng-template #modalContent>
+  <nz-form-item>
+    <nz-form-label nzFor="cCode">用户编号</nz-form-label>
+    <nz-form-control>
+      <input nz-input [(ngModel)]="editDto.cCode" name="cCode" placeholder="用户编号" id="cCode">
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-label nzFor="cName">用户名称</nz-form-label>
+    <nz-form-control>
+      <input nz-input [(ngModel)]="editDto.cName" name="cName" placeholder="用户编号" id="cName">
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-label nzFor="cPassword">用户密码</nz-form-label>
+    <nz-form-control>
+      <input nz-input type="password" [(ngModel)]="editDto.cPassword" name="cPassword" placeholder="用户密码" id="cPassword">
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-label nzFor="cPhone">手机号码</nz-form-label>
+    <nz-form-control>
+      <input nz-input [(ngModel)]="cPhone" name="editDto.cPhone" placeholder="手机号码" id="cPhone">
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-label nzFor="cMemo">备注</nz-form-label>
+    <nz-form-control>
+      <input nz-input type="text" [(ngModel)]="editDto.cMemo" name="cMemo" placeholder="请输入" id="cMemo">
+    </nz-form-control>
+  </nz-form-item>
+</ng-template>
